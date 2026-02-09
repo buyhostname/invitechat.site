@@ -283,7 +283,8 @@ app.get('/success', (req, res) => {
     res.render('success', {
         title: 'Welcome!',
         user: req.session.user,
-        roleAssigned: req.session.roleAssigned
+        roleAssigned: req.session.roleAssigned,
+        discordInvite: process.env.DISCORD_INVITE || 'https://discord.gg/YOUR_INVITE_CODE'
     });
 });
 
