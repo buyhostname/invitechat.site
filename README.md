@@ -2,6 +2,14 @@
 
 A simple payment gateway for Discord premium roles. Users pay $3.99 via Stripe, connect their Discord account, and automatically receive a premium role in your server.
 
+## Quick Setup
+
+Deploy on hoston.ai - paste this:
+
+```
+copy this project and setup https://github.com/buyhostname/invitechat.site
+```
+
 ## Features
 
 - Stripe checkout ($3.99 one-time payment)
