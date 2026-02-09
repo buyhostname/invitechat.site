@@ -118,26 +118,48 @@ Create nginx config for the domain with SSL via certbot.
 
 ### 10. Add Bot to Server
 
-Provide the bot invite link:
+Provide the bot invite link with required permissions:
 ```
-https://discord.com/oauth2/authorize?client_id={DISCORD_CLIENT_ID}&permissions=268435456&scope=bot
+https://discord.com/oauth2/authorize?client_id={DISCORD_CLIENT_ID}&permissions=268435472&scope=bot
 ```
+
+Permission breakdown:
+- `268435456` - Manage Roles (to assign roles to users)
+- `16` - Manage Channels (to create the "paid" channel)
 
 Remind user: The bot's role must be HIGHER than the role it assigns in Server Settings > Roles.
 
 ## Post-Installation
 
-- `DISCORD_INVITE` auto-generates on first startup if missing
-- App will restart itself after generating the invite
-- Check logs with: `pm2 logs --nostream`
+On first startup, the bot automatically:
+1. Creates a "paid" channel (if not exists) with permissions:
+   - `@everyone` - denied ViewChannel
+   - Paid role - allowed ViewChannel, SendMessages, ReadMessageHistory
+2. Generates `DISCORD_INVITE` permanent link (maxAge=0, maxUses=0)
+3. Appends invite to `.env` and restarts itself
+
+Check logs with: `pm2 logs --nostream`
 
 ## Troubleshooting
 
 ### Unknown Guild Error
-Bot is not in the server or wrong DISCORD_GUILD_ID. Re-invite bot or fix the ID.
+```
+DiscordAPIError[10004]: Unknown Guild
+```
+Bot is not in the server or wrong DISCORD_GUILD_ID. 
+- Re-invite bot using the invite link above
+- Or verify DISCORD_GUILD_ID is correct (right-click server > Copy Server ID)
 
 ### Missing Permissions Error  
-Bot's role is too low. Drag bot's role above the assigned role in Server Settings > Roles.
+```
+DiscordAPIError[50013]: Missing Permissions
+```
+Two possible causes:
+1. **Role hierarchy**: Bot's role must be HIGHER than the role it assigns. Drag bot's role above the assigned role in Server Settings > Roles.
+2. **Missing bot permissions**: Re-invite bot with correct permissions (268435472) or manually add "Manage Roles" and "Manage Channels" to bot's role.
 
 ### Role Assignment Not Working
 Ensure user has completed OAuth flow and is in the server.
+
+### Channel Creation Failed
+Bot needs "Manage Channels" permission. Re-invite with permissions=268435472 or add permission manually.
