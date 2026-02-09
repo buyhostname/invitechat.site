@@ -17,11 +17,45 @@ const discordBot = new Client({
 discordBot.once('clientReady', async () => {
     console.log(`Discord bot logged in as ${discordBot.user.tag}`);
     
-    // Auto-generate DISCORD_INVITE if not set
-    if (!process.env.DISCORD_INVITE && process.env.DISCORD_GUILD_ID) {
-        console.log('DISCORD_INVITE not set, generating permanent invite...');
-        try {
-            const guild = await discordBot.guilds.fetch(process.env.DISCORD_GUILD_ID);
+    if (!process.env.DISCORD_GUILD_ID) {
+        console.error('DISCORD_GUILD_ID not set, skipping startup tasks');
+        return;
+    }
+    
+    try {
+        const guild = await discordBot.guilds.fetch(process.env.DISCORD_GUILD_ID);
+        const roleId = process.env.DISCORD_ROLE_ID;
+        
+        // Ensure "paid" channel exists with role-only access
+        if (roleId) {
+            const channels = await guild.channels.fetch();
+            let paidChannel = channels.find(c => c.name === 'paid' && c.type === 0);
+            
+            if (!paidChannel) {
+                console.log('Creating "paid" channel with role-only access...');
+                paidChannel = await guild.channels.create({
+                    name: 'paid',
+                    type: 0, // Text channel
+                    permissionOverwrites: [
+                        {
+                            id: guild.id, // @everyone
+                            deny: ['ViewChannel']
+                        },
+                        {
+                            id: roleId,
+                            allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory']
+                        }
+                    ]
+                });
+                console.log(`Created "paid" channel: ${paidChannel.id}`);
+            } else {
+                console.log(`"paid" channel already exists: ${paidChannel.id}`);
+            }
+        }
+        
+        // Auto-generate DISCORD_INVITE if not set
+        if (!process.env.DISCORD_INVITE) {
+            console.log('DISCORD_INVITE not set, generating permanent invite...');
             const channels = await guild.channels.fetch();
             const textChannel = channels.find(c => c.type === 0);
             
@@ -45,9 +79,9 @@ discordBot.once('clientReady', async () => {
             } else {
                 console.error('No text channel found to create invite');
             }
-        } catch (err) {
-            console.error('Failed to generate invite:', err.message);
         }
+    } catch (err) {
+        console.error('Startup tasks failed:', err.message);
     }
 });
 
