@@ -13,7 +13,7 @@ const discordBot = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
 });
 
-discordBot.once('ready', () => {
+discordBot.once('clientReady', () => {
     console.log(`Discord bot logged in as ${discordBot.user.tag}`);
 });
 
