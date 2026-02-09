@@ -1,0 +1,114 @@
+extends layout
+
+block content
+  main(class="min-h-screen flex flex-col")
+    //- Header
+    nav(class="bg-discord-darkerBg/80 backdrop-blur-md border-b border-discord-border/50 px-6 py-3 sticky top-0 z-50")
+      div(class="max-w-6xl mx-auto flex items-center justify-between")
+        a(href="/" class="flex items-center gap-2.5 group")
+          div(class="w-9 h-9 bg-discord-blurple rounded-full flex items-center justify-center group-hover:bg-discord-blurpleHover transition-colors")
+            svg(class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor")
+              path(d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z")
+          span(class="text-lg font-semibold text-white") InviteChat
+
+    //- Main Content
+    div(class="flex-1 py-12 px-6")
+      div(class="max-w-3xl mx-auto")
+        div(class="bg-discord-darkerBg rounded-xl p-8 shadow-discord")
+          h1(class="text-3xl font-bold text-white mb-2") Privacy Policy
+          p(class="text-discord-textMuted text-sm mb-8") Last updated: January 2026
+          
+          div(class="space-y-8 text-discord-textNormal")
+            section
+              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
+                span(class="w-6 h-6 bg-discord-green/20 text-discord-green rounded flex items-center justify-center text-sm font-bold") 1
+                | Information We Collect
+              p(class="leading-relaxed mb-3") We collect the following information when you use our service:
+              ul(class="list-none space-y-2 ml-8")
+                li(class="flex items-center gap-2")
+                  span(class="w-1.5 h-1.5 bg-discord-textMuted rounded-full")
+                  | Discord user ID, username, and avatar
+                li(class="flex items-center gap-2")
+                  span(class="w-1.5 h-1.5 bg-discord-textMuted rounded-full")
+                  | Email address (from Discord OAuth)
+                li(class="flex items-center gap-2")
+                  span(class="w-1.5 h-1.5 bg-discord-textMuted rounded-full")
+                  | Payment information (processed by Stripe)
+            
+            section
+              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
+                span(class="w-6 h-6 bg-discord-green/20 text-discord-green rounded flex items-center justify-center text-sm font-bold") 2
+                | How We Use Your Information
+              p(class="leading-relaxed mb-3") We use your information to:
+              ul(class="list-none space-y-2 ml-8")
+                li(class="flex items-center gap-2")
+                  span(class="w-1.5 h-1.5 bg-discord-textMuted rounded-full")
+                  | Process payments and verify purchases
+                li(class="flex items-center gap-2")
+                  span(class="w-1.5 h-1.5 bg-discord-textMuted rounded-full")
+                  | Assign premium roles to your Discord account
+                li(class="flex items-center gap-2")
+                  span(class="w-1.5 h-1.5 bg-discord-textMuted rounded-full")
+                  | Communicate with you about your account
+                li(class="flex items-center gap-2")
+                  span(class="w-1.5 h-1.5 bg-discord-textMuted rounded-full")
+                  | Improve our services
+            
+            section
+              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
+                span(class="w-6 h-6 bg-discord-green/20 text-discord-green rounded flex items-center justify-center text-sm font-bold") 3
+                | Data Storage and Security
+              p(class="leading-relaxed") Your data is stored securely and we implement appropriate technical measures to protect your information. Payment data is handled entirely by Stripe and we do not store credit card information.
+            
+            section
+              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
+                span(class="w-6 h-6 bg-discord-green/20 text-discord-green rounded flex items-center justify-center text-sm font-bold") 4
+                | Third-Party Services
+              p(class="leading-relaxed mb-3") We use the following third-party services:
+              ul(class="list-none space-y-2 ml-8")
+                li(class="flex items-center gap-2")
+                  span(class="w-1.5 h-1.5 bg-discord-textMuted rounded-full")
+                  | Stripe — Payment processing
+                li(class="flex items-center gap-2")
+                  span(class="w-1.5 h-1.5 bg-discord-textMuted rounded-full")
+                  | Discord — Authentication and role management
+            
+            section
+              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
+                span(class="w-6 h-6 bg-discord-green/20 text-discord-green rounded flex items-center justify-center text-sm font-bold") 5
+                | Data Sharing
+              p(class="leading-relaxed") We do not sell or share your personal information with third parties except as necessary to provide our services or as required by law.
+            
+            section
+              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
+                span(class="w-6 h-6 bg-discord-green/20 text-discord-green rounded flex items-center justify-center text-sm font-bold") 6
+                | Your Rights
+              p(class="leading-relaxed mb-3") You have the right to:
+              ul(class="list-none space-y-2 ml-8")
+                li(class="flex items-center gap-2")
+                  span(class="w-1.5 h-1.5 bg-discord-textMuted rounded-full")
+                  | Access your personal data
+                li(class="flex items-center gap-2")
+                  span(class="w-1.5 h-1.5 bg-discord-textMuted rounded-full")
+                  | Request deletion of your data
+                li(class="flex items-center gap-2")
+                  span(class="w-1.5 h-1.5 bg-discord-textMuted rounded-full")
+                  | Opt out of marketing communications
+            
+            section
+              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
+                span(class="w-6 h-6 bg-discord-green/20 text-discord-green rounded flex items-center justify-center text-sm font-bold") 7
+                | Cookies
+              p(class="leading-relaxed") We use session cookies to maintain your login state. These are essential for the service to function and are not used for tracking.
+            
+            section
+              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
+                span(class="w-6 h-6 bg-discord-green/20 text-discord-green rounded flex items-center justify-center text-sm font-bold") 8
+                | Contact
+              p(class="leading-relaxed") For privacy-related questions, please contact us through our Discord server.
+              
+        div(class="text-center mt-8")
+          a(href="/" class="text-discord-textMuted text-sm hover:text-discord-textNormal transition-colors inline-flex items-center gap-2")
+            svg(class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24")
+              path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18")
+            | Back to Home
