@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
+const fs = require('fs');
 const Stripe = require('stripe');
 const { Client, GatewayIntentBits } = require('discord.js');
 
@@ -13,8 +14,41 @@ const discordBot = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
 });
 
-discordBot.once('clientReady', () => {
+discordBot.once('clientReady', async () => {
     console.log(`Discord bot logged in as ${discordBot.user.tag}`);
+    
+    // Auto-generate DISCORD_INVITE if not set
+    if (!process.env.DISCORD_INVITE && process.env.DISCORD_GUILD_ID) {
+        console.log('DISCORD_INVITE not set, generating permanent invite...');
+        try {
+            const guild = await discordBot.guilds.fetch(process.env.DISCORD_GUILD_ID);
+            const channels = await guild.channels.fetch();
+            const textChannel = channels.find(c => c.type === 0);
+            
+            if (textChannel) {
+                const invite = await textChannel.createInvite({
+                    maxAge: 0,
+                    maxUses: 0,
+                    unique: true
+                });
+                
+                const inviteUrl = `https://discord.gg/${invite.code}`;
+                console.log(`Generated invite: ${inviteUrl}`);
+                
+                // Append to .env file
+                const envPath = path.join(__dirname, '.env');
+                fs.appendFileSync(envPath, `\nDISCORD_INVITE=${inviteUrl}\n`);
+                console.log('Added DISCORD_INVITE to .env, restarting...');
+                
+                // Crash to trigger pm2 restart with new env
+                process.exit(1);
+            } else {
+                console.error('No text channel found to create invite');
+            }
+        } catch (err) {
+            console.error('Failed to generate invite:', err.message);
+        }
+    }
 });
 
 discordBot.login(process.env.DISCORD_BOT_TOKEN).catch(err => {
