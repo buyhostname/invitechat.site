@@ -129,6 +129,99 @@ Permission breakdown:
 
 Remind user: The bot's role must be HIGHER than the role it assigns in Server Settings > Roles.
 
+---
+
+## Telegram Setup (Optional but Recommended)
+
+Users get access to BOTH Discord AND Telegram after payment. Follow these steps to configure Telegram.
+
+### 11. Ask for Telegram Bot Token
+
+Ask the user:
+
+```
+I need your Telegram bot credentials. Create a bot via @BotFather on Telegram:
+
+1. Open Telegram and message @BotFather
+2. Send /newbot
+3. Choose a name for your bot (e.g., "InviteChat Premium")
+4. Choose a username ending in "bot" (e.g., "InviteChatSiteBot")
+5. Copy the bot token (looks like: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz)
+
+Please paste your TELEGRAM_BOT_TOKEN:
+```
+
+Save the token to `.env` as `TELEGRAM_BOT_TOKEN`.
+
+### 12. Ask for Bot Username
+
+Ask the user:
+
+```
+What is your bot's username? (without the @ symbol)
+Example: If your bot is @MyPremiumBot, enter: MyPremiumBot
+```
+
+Save to `.env` as `TELEGRAM_BOT_USERNAME`.
+
+### 13. Ask for Telegram Group ID
+
+Ask the user:
+
+```
+I need your Telegram private group ID.
+
+To find it:
+1. Create a private group in Telegram (if you haven't already)
+2. Add @userinfobot to your private group temporarily
+3. It will post the group ID (a negative number like -1001234567890 or -5237161373)
+4. Copy that ID
+5. Remove @userinfobot from the group
+
+Please paste your TELEGRAM_GROUP_ID:
+```
+
+Save to `.env` as `TELEGRAM_GROUP_ID`.
+
+### 14. Add Bot to Group as Admin
+
+Instruct the user:
+
+```
+Now add your Telegram bot to the private group as an administrator:
+
+1. Open your private group in Telegram
+2. Tap the group name at the top to open Group Info
+3. Tap "Administrators" or "Add Admin"
+4. Search for your bot (@YourBotUsername)
+5. Enable this permission:
+   - "Invite Users via Link" (required for generating invite links)
+6. Save/Done
+
+Confirm: Have you added the bot as admin with "Invite Users via Link" permission? (yes/no)
+```
+
+Wait for confirmation before proceeding.
+
+### 15. Update .env with Telegram Variables
+
+Add these lines to the `.env` file:
+
+```env
+# Telegram
+TELEGRAM_BOT_TOKEN={collected}
+TELEGRAM_BOT_USERNAME={collected}
+TELEGRAM_GROUP_ID={collected}
+```
+
+### 16. Restart Application
+
+```bash
+pm2 restart main-3000
+```
+
+---
+
 ## Post-Installation
 
 On first startup, the bot automatically:
@@ -163,3 +256,40 @@ Ensure user has completed OAuth flow and is in the server.
 
 ### Channel Creation Failed
 Bot needs "Manage Channels" permission. Re-invite with permissions=268435472 or add permission manually.
+
+---
+
+## Telegram Troubleshooting
+
+### Bot Can't Create Invite Links
+```
+Error: CHAT_ADMIN_REQUIRED
+```
+Bot is not an admin in the group or doesn't have "Invite Users via Link" permission.
+- Open group settings > Administrators > Edit bot permissions
+- Enable "Invite Users via Link"
+
+### Chat Not Found
+```
+Error: Bad Request: chat not found
+```
+The group ID is incorrect or bot is not a member of the group.
+- Verify group ID using @userinfobot
+- Make sure bot is added to the group first, then made admin
+
+### Telegram Login Widget Not Appearing
+The widget requires `TELEGRAM_BOT_USERNAME` to be set correctly.
+- Check `.env` has `TELEGRAM_BOT_USERNAME=YourBotName` (without @)
+- Bot must have a username set via @BotFather
+- Restart the application after setting
+
+### Auth Verification Failed
+```
+error=telegram_auth_failed
+```
+The Telegram Login Widget data couldn't be verified.
+- Ensure `TELEGRAM_BOT_TOKEN` is correct
+- Token must match the bot username exactly
+
+### Invite Link Expired
+One-time invite links expire after 1 hour. User needs to re-authenticate via Telegram Login Widget to get a new link.

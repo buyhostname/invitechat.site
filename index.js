@@ -3,8 +3,10 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const Stripe = require('stripe');
 const { Client, GatewayIntentBits } = require('discord.js');
+const TelegramBot = require('node-telegram-bot-api');
 
 const app = express();
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
@@ -89,6 +91,32 @@ discordBot.login(process.env.DISCORD_BOT_TOKEN).catch(err => {
     console.error('Discord bot login failed:', err.message);
 });
 
+// Telegram bot setup (polling disabled - we only need API calls)
+let telegramBot = null;
+if (process.env.TELEGRAM_BOT_TOKEN) {
+    telegramBot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
+    console.log('Telegram bot initialized');
+}
+
+// Verify Telegram Login Widget authentication
+function verifyTelegramAuth(data) {
+    const secret = crypto.createHash('sha256')
+        .update(process.env.TELEGRAM_BOT_TOKEN)
+        .digest();
+    
+    const checkString = Object.keys(data)
+        .filter(k => k !== 'hash')
+        .sort()
+        .map(k => `${k}=${data[k]}`)
+        .join('\n');
+    
+    const hmac = crypto.createHmac('sha256', secret)
+        .update(checkString)
+        .digest('hex');
+    
+    return hmac === data.hash;
+}
+
 app.set('trust proxy', true);
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
@@ -128,7 +156,7 @@ app.post('/create-checkout-session', async (req, res) => {
                     currency: 'usd',
                     product_data: {
                         name: 'InviteChat Premium Access',
-                        description: 'Get exclusive Discord role and premium features'
+                        description: 'Get exclusive Discord role and Telegram group access'
                     },
                     unit_amount: 399, // $3.99
                 },
@@ -161,7 +189,8 @@ app.get('/payment-success', async (req, res) => {
             req.session.stripeSessionId = sessionId;
             res.render('payment-success', { 
                 title: 'Payment Successful',
-                user: req.session.user
+                user: req.session.user,
+                telegramBotUsername: process.env.TELEGRAM_BOT_USERNAME
             });
         } else {
             res.redirect('/');
@@ -274,9 +303,67 @@ app.get('/redirect', async (req, res) => {
     }
 });
 
+// Telegram auth callback (from Telegram Login Widget)
+app.get('/telegram-auth', async (req, res) => {
+    if (!req.session.paid) {
+        return res.redirect('/');
+    }
+    
+    // Check if Telegram is configured
+    if (!telegramBot || !process.env.TELEGRAM_GROUP_ID) {
+        console.error('Telegram not configured');
+        return res.redirect('/?error=telegram_not_configured');
+    }
+    
+    // Verify Telegram auth data
+    if (!verifyTelegramAuth(req.query)) {
+        console.error('Telegram auth verification failed');
+        return res.redirect('/?error=telegram_auth_failed');
+    }
+    
+    // Check auth_date not too old (5 minutes)
+    const authDate = parseInt(req.query.auth_date);
+    if (Date.now() / 1000 - authDate > 300) {
+        return res.redirect('/?error=telegram_auth_expired');
+    }
+    
+    // Store Telegram user in session
+    req.session.telegramUser = {
+        id: req.query.id,
+        first_name: req.query.first_name,
+        last_name: req.query.last_name || '',
+        username: req.query.username || '',
+        photo_url: req.query.photo_url || ''
+    };
+    
+    // Generate one-time invite link
+    try {
+        const inviteLink = await telegramBot.createChatInviteLink(
+            process.env.TELEGRAM_GROUP_ID,
+            {
+                member_limit: 1,  // One-time use
+                expire_date: Math.floor(Date.now() / 1000) + 3600  // 1 hour expiry
+            }
+        );
+        
+        req.session.telegramInvite = inviteLink.invite_link;
+        req.session.telegramConnected = true;
+        console.log(`Generated Telegram invite for ${req.query.username || req.query.id}`);
+    } catch (err) {
+        console.error('Telegram invite error:', err);
+        return res.redirect('/?error=telegram_invite_failed');
+    }
+    
+    res.redirect('/success');
+});
+
 // Success page after Discord login
 app.get('/success', (req, res) => {
-    if (!req.session.user || !req.session.paid) {
+    // Allow access if user connected via Discord OR Telegram
+    const hasDiscord = req.session.user;
+    const hasTelegram = req.session.telegramConnected;
+    
+    if (!req.session.paid || (!hasDiscord && !hasTelegram)) {
         return res.redirect('/');
     }
     
@@ -284,7 +371,10 @@ app.get('/success', (req, res) => {
         title: 'Welcome!',
         user: req.session.user,
         roleAssigned: req.session.roleAssigned,
-        discordInvite: process.env.DISCORD_INVITE || 'https://discord.gg/YOUR_INVITE_CODE'
+        discordInvite: process.env.DISCORD_INVITE || 'https://discord.gg/YOUR_INVITE_CODE',
+        telegramUser: req.session.telegramUser,
+        telegramInvite: req.session.telegramInvite,
+        telegramBotUsername: process.env.TELEGRAM_BOT_USERNAME
     });
 });
 

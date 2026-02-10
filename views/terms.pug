@@ -1,74 +1,70 @@
 extends layout
 
 block content
-  main(class="min-h-screen flex flex-col")
+  div(class="min-h-screen flex flex-col")
     //- Header
-    nav(class="bg-discord-darkerBg/80 backdrop-blur-md border-b border-discord-border/50 px-6 py-3 sticky top-0 z-50")
-      div(class="max-w-6xl mx-auto flex items-center justify-between")
-        a(href="/" class="flex items-center gap-2.5 group")
-          div(class="w-9 h-9 bg-discord-blurple rounded-full flex items-center justify-center group-hover:bg-discord-blurpleHover transition-colors")
-            svg(class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor")
-              path(d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z")
-          span(class="text-lg font-semibold text-white") InviteChat
+    header(class="border-b border-gray-700 h-16 flex items-center px-6")
+      div(class="max-w-4xl mx-auto w-full")
+        a(href="/" class="font-semibold text-sm tracking-tight flex items-center gap-2")
+          span(class="text-lg") ▲
+          span InviteChat
 
-    //- Main Content
-    div(class="flex-1 py-12 px-6")
-      div(class="max-w-3xl mx-auto")
-        div(class="bg-discord-darkerBg rounded-xl p-8 shadow-discord")
-          h1(class="text-3xl font-bold text-white mb-2") Terms of Service
-          p(class="text-discord-textMuted text-sm mb-8") Last updated: January 2026
+    //- Main
+    main(class="flex-1 py-16 px-6")
+      div(class="max-w-2xl mx-auto")
+        div(class="mb-12")
+          p(class="text-gray-500 text-xs font-mono mb-3 uppercase tracking-wider") legal
+          h1(class="text-2xl font-medium") Terms of Service
+          p(class="text-gray-500 text-sm mt-2") Last updated: January 2026
+        
+        div(class="space-y-10 text-sm text-gray-300 leading-relaxed")
+          section
+            h2(class="text-white font-medium mb-3 flex items-center gap-3")
+              span(class="text-gray-500 font-mono text-xs") 01
+              | Acceptance of Terms
+            p By accessing and using InviteChat services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.
           
-          div(class="space-y-8 text-discord-textNormal")
-            section
-              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
-                span(class="w-6 h-6 bg-discord-blurple/20 text-discord-blurple rounded flex items-center justify-center text-sm font-bold") 1
-                | Acceptance of Terms
-              p(class="leading-relaxed") By accessing and using InviteChat services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.
-            
-            section
-              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
-                span(class="w-6 h-6 bg-discord-blurple/20 text-discord-blurple rounded flex items-center justify-center text-sm font-bold") 2
-                | Description of Service
-              p(class="leading-relaxed") InviteChat provides premium Discord community access through a one-time payment system. Upon successful payment and Discord account connection, users receive an exclusive role granting access to premium features and channels.
-            
-            section
-              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
-                span(class="w-6 h-6 bg-discord-blurple/20 text-discord-blurple rounded flex items-center justify-center text-sm font-bold") 3
-                | Payment and Refunds
-              p(class="leading-relaxed") All payments are processed securely through Stripe. Payments are non-refundable except in cases of technical issues preventing service delivery. Contact us within 7 days of purchase if you experience any issues.
-            
-            section
-              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
-                span(class="w-6 h-6 bg-discord-blurple/20 text-discord-blurple rounded flex items-center justify-center text-sm font-bold") 4
-                | User Conduct
-              p(class="leading-relaxed") Users must comply with Discord's Terms of Service and Community Guidelines. We reserve the right to revoke premium access for users who violate community standards or engage in harmful behavior.
-            
-            section
-              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
-                span(class="w-6 h-6 bg-discord-blurple/20 text-discord-blurple rounded flex items-center justify-center text-sm font-bold") 5
-                | Account Security
-              p(class="leading-relaxed") You are responsible for maintaining the security of your Discord account. We are not liable for any loss or damage arising from unauthorized access to your account.
-            
-            section
-              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
-                span(class="w-6 h-6 bg-discord-blurple/20 text-discord-blurple rounded flex items-center justify-center text-sm font-bold") 6
-                | Modifications to Service
-              p(class="leading-relaxed") We reserve the right to modify or discontinue the service at any time. We will provide reasonable notice of any significant changes.
-            
-            section
-              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
-                span(class="w-6 h-6 bg-discord-blurple/20 text-discord-blurple rounded flex items-center justify-center text-sm font-bold") 7
-                | Limitation of Liability
-              p(class="leading-relaxed") InviteChat is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages.
-            
-            section
-              h2(class="text-lg font-semibold text-white mb-3 flex items-center gap-2")
-                span(class="w-6 h-6 bg-discord-blurple/20 text-discord-blurple rounded flex items-center justify-center text-sm font-bold") 8
-                | Contact
-              p(class="leading-relaxed") For questions about these Terms of Service, please contact us through our Discord server.
-              
-        div(class="text-center mt-8")
-          a(href="/" class="text-discord-textMuted text-sm hover:text-discord-textNormal transition-colors inline-flex items-center gap-2")
-            svg(class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24")
-              path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18")
-            | Back to Home
+          section
+            h2(class="text-white font-medium mb-3 flex items-center gap-3")
+              span(class="text-gray-500 font-mono text-xs") 02
+              | Description of Service
+            p InviteChat provides premium community access through Discord and Telegram. Upon successful payment and account connection, users receive access to premium features and private channels.
+          
+          section
+            h2(class="text-white font-medium mb-3 flex items-center gap-3")
+              span(class="text-gray-500 font-mono text-xs") 03
+              | Payment and Refunds
+            p All payments are processed securely through Stripe. Payments are non-refundable except in cases of technical issues preventing service delivery. Contact us within 7 days of purchase if you experience any issues.
+          
+          section
+            h2(class="text-white font-medium mb-3 flex items-center gap-3")
+              span(class="text-gray-500 font-mono text-xs") 04
+              | User Conduct
+            p Users must comply with Discord and Telegram Terms of Service and Community Guidelines. We reserve the right to revoke premium access for users who violate community standards or engage in harmful behavior.
+          
+          section
+            h2(class="text-white font-medium mb-3 flex items-center gap-3")
+              span(class="text-gray-500 font-mono text-xs") 05
+              | Account Security
+            p You are responsible for maintaining the security of your accounts. We are not liable for any loss or damage arising from unauthorized access to your account.
+          
+          section
+            h2(class="text-white font-medium mb-3 flex items-center gap-3")
+              span(class="text-gray-500 font-mono text-xs") 06
+              | Modifications to Service
+            p We reserve the right to modify or discontinue the service at any time. We will provide reasonable notice of any significant changes.
+          
+          section
+            h2(class="text-white font-medium mb-3 flex items-center gap-3")
+              span(class="text-gray-500 font-mono text-xs") 07
+              | Limitation of Liability
+            p InviteChat is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages.
+          
+          section
+            h2(class="text-white font-medium mb-3 flex items-center gap-3")
+              span(class="text-gray-500 font-mono text-xs") 08
+              | Contact
+            p For questions about these Terms of Service, please contact us through our Discord server.
+        
+        div(class="mt-12 pt-8 border-t border-gray-700")
+          a(href="/" class="text-gray-500 text-sm hover:text-white transition-colors") ← Back
